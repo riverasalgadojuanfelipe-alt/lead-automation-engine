@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead → Vendedor · demo</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #14181f; --muted: #5d6675; --line: #e2e6ec;
+    --accent: #2457f5; --accent-ink: #ffffff;
+    --hot: #c2371f; --hot-bg: #fdeae6; --warm: #9a6400; --warm-bg: #fff3d9; --cold: #3b5b8c; --cold-bg: #e8eefa;
+    --ok: #17794a; --ok-bg: #e3f5ec; --err: #b3261e; --err-bg: #fdeceb;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1116; --card: #171b23; --ink: #e8ebf0; --muted: #98a2b3; --line: #2a303b;
+      --accent: #6d8dff; --accent-ink: #0e1116;
+      --hot: #ff8a73; --hot-bg: #3a1c17; --warm: #f2c15c; --warm-bg: #35290f; --cold: #8fb0e6; --cold-bg: #1a2638;
+      --ok: #6fd6a2; --ok-bg: #12301f; --err: #ff8f87; --err-bg: #3a1917;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 20px 24px 8px; max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .engine { font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--line); background: var(--card); color: var(--muted); }
+  .chip.sim { background: var(--warm-bg); color: var(--warm); border-color: transparent; }
+  .chip.real { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+  main { max-width: 1180px; margin: 0 auto; padding: 8px 24px 40px; display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; padding: 8px 16px 32px; } header { padding: 16px; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 12px; font-weight: 700; }
+  label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+  input, textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { min-height: 110px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; margin-top: 14px; padding: 11px; }
+  button:disabled { opacity: 0.55; cursor: progress; }
+  .examples { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .examples button { padding: 5px 10px; font-size: 12.5px; font-weight: 500; }
+  .steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .step { font-size: 12.5px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .step.done { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+  .step.fail { background: var(--err-bg); color: var(--err); border-color: transparent; }
+  .empty { color: var(--muted); padding: 36px 8px; text-align: center; }
+  .head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+  .who { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 13.5px; }
+  .tier { font-weight: 800; font-size: 13px; padding: 4px 12px; border-radius: 999px; letter-spacing: 0.04em; }
+  .tier.hot { background: var(--hot-bg); color: var(--hot); }
+  .tier.warm { background: var(--warm-bg); color: var(--warm); }
+  .tier.cold { background: var(--cold-bg); color: var(--cold); }
+  .meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 10px 0 2px; }
+  .meter > span { display: block; height: 100%; background: var(--accent); }
+  .meter-label { font-size: 12.5px; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+  ul { margin: 0; padding-left: 18px; }
+  li { margin: 2px 0; }
+  .brief { border-left: 4px solid var(--accent); background: var(--bg); padding: 12px 14px; border-radius: 0 8px 8px 0; margin-top: 14px; }
+  .brief .line { margin: 4px 0; }
+  .brief b { font-weight: 700; }
+  .mail { border: 1px solid var(--line); border-radius: 10px; margin-top: 8px; overflow: hidden; }
+  .mail summary { cursor: pointer; padding: 10px 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .mail pre { margin: 0; padding: 12px; white-space: pre-wrap; font: 13.5px/1.55 var(--mono); border-top: 1px solid var(--line); background: var(--bg); }
+  .day { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--cold-bg); color: var(--cold); }
+  .st { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+  .st.pending { background: var(--warm-bg); color: var(--warm); }
+  .st.sent { background: var(--ok-bg); color: var(--ok); }
+  .st.cancelled, .st.failed { background: var(--err-bg); color: var(--err); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .notice { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+  .error { background: var(--err-bg); color: var(--err); padding: 10px 12px; border-radius: 8px; margin-top: 10px; font-size: 13.5px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 99px; font-size: 13.5px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lead entra → el vendedor recibe el caso listo</h1>
+  <div class="engine" id="engine" aria-live="polite"></div>
+</header>
+
+<main>
+  <section class="card" aria-label="Nuevo lead">
+    <h2>1 · Escribe un lead</h2>
+    <div class="examples" id="examples" aria-label="Ejemplos"></div>
+    <form id="form" autocomplete="off">
+      <div class="row">
+        <div><label for="name">Nombre</label><input id="name" required maxlength="200"></div>
+        <div><label for="email">Email</label><input id="email" type="email" required maxlength="320"></div>
+      </div>
+      <div class="row">
+        <div><label for="company">Empresa</label><input id="company" maxlength="200"></div>
+        <div><label for="job_title">Cargo</label><input id="job_title" maxlength="200"></div>
+      </div>
+      <label for="country">País</label><input id="country" maxlength="100">
+      <label for="message">Mensaje del formulario</label>
+      <textarea id="message" maxlength="3000" placeholder="Qué sistema usan, qué les duele, cuántas sedes o empleados…"></textarea>
+      <button class="primary" id="send" type="submit">Enviar lead al sistema</button>
+    </form>
+    <div class="error" id="err" hidden role="alert"></div>
+  </section>
+
+  <section class="card" aria-label="Resultado" aria-live="polite">
+    <h2>2 · Lo que ocurre y lo que recibe el vendedor</h2>
+    <div id="out"><div class="empty">Envía un lead y aquí aparece el resultado.</div></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const EXAMPLES = [
+  { label: "Distribuidora con SAP", name: "Ana Gómez", email: "ana.gomez@distribuidoraandina.example", company: "Distribuidora Andina", job_title: "Gerente General", country: "Colombia",
+    message: "Usamos SAP Business One y los reportes los hacemos en Excel. Tenemos 4 sedes y 120 empleados. Queremos ver inventario y flujo de caja al día." },
+  { label: "Retail con QuickBooks", name: "Carlos Pérez", email: "carlos@tiendasolaris.example", company: "Tiendas Solaris (retail)", job_title: "Contador", country: "Perú",
+    message: "Llevamos todo en QuickBooks. Nos cuesta tener el margen por tienda sin esperar al cierre del mes. Somos 35 personas." },
+  { label: "Lead vago", name: "Luis Torres", email: "luis@gmail.example", company: "", job_title: "", country: "México", message: "Hola, quiero información." },
+];
+let current = null; // último contact_id mostrado
+let currentEmail = null;
+
+/* Todo el texto del lead es NO confiable: se inserta SIEMPRE con textContent (nunca innerHTML). */
+function el(tag, props = {}, children = []) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else if (k === "onclick") n.onclick = v; else n.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) if (c) n.append(c);
+  return n;
+}
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2200); }
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  let data = null; try { data = await r.json(); } catch (_) {}
+  if (!r.ok) throw new Error((data && (typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail))) || ("HTTP " + r.status));
+  return data;
+}
+
+async function loadEngine() {
+  try {
+    const h = await api("/health");
+    const box = $("engine"); box.replaceChildren();
+    const llmReal = h.llm !== "mock";
+    box.append(
+      el("span", { class: "chip " + (llmReal ? "real" : "sim"), text: llmReal ? "IA: modelo real (" + h.llm + ")" : "IA: SIMULADA (reglas, no es un LLM)" }),
+      el("span", { class: "chip sim", text: h.email === "file" ? "Correo: SIMULADO (no se envía)" : "Correo: " + h.email }),
+      el("span", { class: "chip sim", text: "CRM: SIMULADO (SQLite)" }),
+    );
+  } catch (e) { $("engine").textContent = "No se pudo leer el estado del servidor"; }
+}
+
+function fillExamples() {
+  const box = $("examples");
+  EXAMPLES.forEach((ex) => box.append(el("button", { type: "button", text: ex.label, onclick: () => {
+    for (const k of ["name", "email", "company", "job_title", "country", "message"]) $(k).value = ex[k];
+  } })));
+}
+
+function stepChips(detail, result) {
+  const status = detail.contact.status;
+  const failed = status.startsWith("failed:");
+  const order = ["received", "enriched", "sequenced", "briefed"];
+  const labels = ["Lead recibido", "Enriquecido", "Secuencia programada", "Resumen al vendedor"];
+  const reached = failed ? { received: 1, "failed:enrich": 1, "failed:sequence": 2, "failed:seller_brief": 3 }[status] ?? 1 : order.indexOf(status) + 1;
+  const wrap = el("div", { class: "steps" });
+  labels.forEach((l, i) => wrap.append(el("span", { class: "step " + (i < reached ? "done" : (failed && i === reached ? "fail" : "")), text: (i < reached ? "✓ " : (failed && i === reached ? "✕ " : "")) + l })));
+  return wrap;
+}
+
+function render(detail, result) {
+  const out = $("out"); out.replaceChildren();
+  const c = detail.contact, e = detail.enrichment;
+  currentEmail = c.email; current = c.id;
+  out.append(stepChips(detail, result));
+
+  if (result && result.status && result.status.startsWith("failed:")) {
+    out.append(el("div", { class: "error", text: "Falló la etapa «" + result.status.slice(7) + "»: " + (result.error || "") + ". El lead NO se perdió: quedó guardado." }));
+    out.append(el("div", { class: "actions" }, [el("button", { text: "Reintentar desde esa etapa", onclick: async () => {
+      try { const r = await api("/demo/resume/" + c.id, { method: "POST" }); render(await api("/demo/lead/" + c.id), r); } catch (x) { toast(x.message); }
+    } })]));
+    return;
+  }
+  if (!e) return;
+
+  const head = el("div", { class: "head" }, [
+    el("div", {}, [
+      el("div", { class: "who", text: c.name }),
+      el("div", { class: "sub", text: [c.job_title || "cargo no indicado", c.company || "empresa no indicada", c.country || "país no indicado"].join(" · ") }),
+      el("div", { class: "sub", text: c.email }),
+    ]),
+    el("span", { class: "tier " + e.tier, text: e.tier.toUpperCase() + " · " + e.priority_score + "/100" }),
+  ]);
+  const meter = el("div", { class: "meter", "aria-hidden": "true" }, [el("span", { style: "width:" + e.priority_score + "%" })]);
+
+  const list = (arr, empty) => arr && arr.length ? el("ul", {}, arr.map((t) => el("li", { text: t }))) : el("div", { class: "sub", text: empty });
+  const facts = el("div", { class: "grid2" }, [
+    el("div", {}, [el("div", { class: "k", text: "Industria · tamaño · cargo" }), el("div", { text: e.industry + " · " + e.company_size_band + " · " + e.seniority }),
+      el("div", { class: "k", style: "margin-top:10px", text: "Sistema que usa" }), el("div", { text: e.erp_or_system_mentioned || "no mencionado" })]),
+    el("div", {}, [el("div", { class: "k", text: "Dolores detectados" }), list(e.pain_points, "no se detectaron")]),
+  ]);
+
+  const brief = el("div", { class: "brief", "aria-label": "Resumen para el vendedor" }, [
+    el("div", { class: "k", text: "📩 Lo que recibe el vendedor" }),
+    el("div", { class: "line" }, [el("b", { text: "Por qué importa: " }), document.createTextNode(e.fit_reasoning)]),
+    el("div", { class: "line" }, [el("b", { text: "Qué decirle:" })]),
+    list(e.talking_points, "—"),
+  ]);
+
+  out.append(head, meter, el("div", { class: "meter-label", text: "Prioridad · enriquecido por: " + e.enrichment_source + (e.enrichment_source === "mock" ? " (reglas simuladas)" : "") }), facts, brief);
+
+  // Secuencia de correos
+  out.append(el("div", { class: "k", style: "margin-top:18px", text: "Secuencia de correos programada" }));
+  detail.emails.forEach((m) => {
+    const days = Math.round((new Date(m.send_at) - new Date(c.created_at)) / 86400000);
+    out.append(el("details", { class: "mail" }, [
+      el("summary", {}, [el("span", { class: "day", text: "Día " + Math.max(0, days) }), el("span", { class: "st " + m.status, text: m.status === "sent" ? "enviado (simulado)" : m.status === "pending" ? "pendiente" : m.status === "cancelled" ? "cancelado" : m.status }), el("span", { text: m.subject })]),
+      el("pre", { text: m.body }),
+    ]));
+  });
+
+  // Acciones
+  out.append(el("div", { class: "actions" }, [
+    el("button", { text: "▶ Enviar el correo del día 0", onclick: () => advance(0) }),
+    el("button", { text: "⏩ Avanzar 3 días", onclick: () => advance(3) }),
+    el("button", { text: "💬 El lead respondió", onclick: replied }),
+    el("button", { text: "Reiniciar demo", onclick: reset }),
+  ]));
+  out.append(el("div", { class: "notice", text: "El enriquecimiento puede equivocarse: por eso el vendedor debe revisarlo antes de contactar. Los correos NO salen de verdad; se muestran aquí." }));
+}
+
+async function advance(days) {
+  try {
+    const r = await api("/demo/advance?days=" + days, { method: "POST" });
+    toast("Correos enviados (simulado): " + r.sent + (r.failed ? " · fallidos: " + r.failed : ""));
+    if (current) render(await api("/demo/lead/" + current));
+  } catch (x) { toast(x.message); }
+}
+async function replied() {
+  try {
+    const r = await api("/demo/replied", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: currentEmail }) });
+    toast("Secuencia detenida: " + r.cancelled + " correo(s) cancelado(s)");
+    render(await api("/demo/lead/" + current));
+  } catch (x) { toast(x.message); }
+}
+async function reset() {
+  try { await api("/demo/reset", { method: "POST" }); current = null; $("out").replaceChildren(el("div", { class: "empty", text: "Demo reiniciado. Envía un lead." })); toast("Datos del demo borrados"); } catch (x) { toast(x.message); }
+}
+
+$("form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const btn = $("send"), err = $("err");
+  err.hidden = true; btn.disabled = true; btn.textContent = "Procesando…";
+  const body = {}; for (const k of ["name", "email", "company", "job_title", "country", "message"]) body[k] = $(k).value.trim();
+  try {
+    const d = await api("/demo/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    render(d, d.result);
+  } catch (x) { err.textContent = "No se pudo procesar: " + x.message; err.hidden = false; }
+  finally { btn.disabled = false; btn.textContent = "Enviar lead al sistema"; }
+});
+
+fillExamples(); loadEngine();
+</script>
+</body>
+</html>
